@@ -8,10 +8,13 @@ import lombok.*;
 
 import java.util.Date;
 
+
+//Basic url entity
 @Entity
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 public class UrlEntity {
 
     @Id
