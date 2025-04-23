@@ -15,6 +15,8 @@ public class RootController {
     public RootController(UrlService urlService) {
         this.urlService = urlService;
     }
+
+
     @PostMapping("/trimurl")
     public String trimurl(@RequestBody String url) {
         urlService.saveUrl(url);

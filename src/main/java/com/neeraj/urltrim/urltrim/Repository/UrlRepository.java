@@ -6,4 +6,6 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface UrlRepository extends JpaRepository <UrlEntity, Integer> {
+    boolean existsBymodifiedUrl(String modifiedUrl);
+    UrlEntity findBymodifiedUrl(String modifiedUrl);
 }
