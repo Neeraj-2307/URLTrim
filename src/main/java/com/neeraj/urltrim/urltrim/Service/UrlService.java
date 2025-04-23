@@ -1,8 +1,13 @@
 package com.neeraj.urltrim.urltrim.Service;
 
 import com.neeraj.urltrim.urltrim.Entity.UrlEntity;
+import com.neeraj.urltrim.urltrim.Models.GenericResponseModel;
 import com.neeraj.urltrim.urltrim.Repository.UrlRepository;
+import com.neeraj.urltrim.urltrim.Utils.ErrorCode;
 import org.springframework.stereotype.Service;
+
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.Date;
 import java.util.Random;
 
@@ -15,8 +20,8 @@ public class UrlService {
         this.urlRepository = urlRepository;
     }
 
-    public String saveUrl(String url) {
-        if(isValidURL(url)) {
+    public GenericResponseModel saveUrl(String url) {
+        if(!(urlExists(url))) {
             String trimmedUrl = trimUrl(url);
             Date currDate = new Date();
             UrlEntity urlEntity = UrlEntity.builder()
@@ -28,23 +33,22 @@ public class UrlService {
                     .build();
             urlEntity.setUrl(url);
             urlRepository.save(urlEntity);
-            return "success";
+            return GenericResponseModel.builder()
+                    .success(true)
+                    .responseEntity(urlEntity)
+                    .build();
         }
-        return "validation failed";
+        return GenericResponseModel.builder()
+                .errorCode(ErrorCode.URL_ALREADY_EXISTS)
+                .build();
     }
 
-    private boolean isValidURL(String url) {
-        try {
-            (new java.net.URL(url)).openStream().close();
-            return !(urlExists(url));
-        } catch (Exception ignored) { }
-        return false;
-    }
-
+    //TODO: create some form of atleast any simple validation
     private boolean urlExists(String url) {
         return urlRepository.existsByurl(url);
     }
 
+    //creating a random trimmed url
     private String trimUrl(String url) {
         String alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
         StringBuilder sb = new StringBuilder();
