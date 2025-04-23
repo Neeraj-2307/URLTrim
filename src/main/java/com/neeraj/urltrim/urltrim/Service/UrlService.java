@@ -38,13 +38,16 @@ public class UrlService {
     }
 
     private String trimUrl(String url) {
+        //TODO: implement this
         return "/123";
     }
 
+    //checking if there is a need to redirection
     public boolean uriExists(String currentUri) {
         return urlRepository.existsBymodifiedUrl(currentUri);
     }
 
+    //Returning the original url for redirection
     public String getOriginalUrl(String currenturi) {
         return urlRepository.findBymodifiedUrl(currenturi).getUrl();
     }
