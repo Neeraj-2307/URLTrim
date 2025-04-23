@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.util.Date;
 import java.util.Random;
 
@@ -68,7 +69,17 @@ public class UrlService {
     }
 
     //Returning the original url for redirection
-    public String getOriginalUrl(String currenturi) {
-        return urlRepository.findBymodifiedUrl(currenturi).getUrl();
+    public String getOriginalUrl(String uri) {
+        return getTrimmedEntity(uri).getUrl();
+    }
+
+    public void increaseHitCount(String targetUri) {
+        UrlEntity entity = getTrimmedEntity(targetUri);
+        entity.setHitCount(entity.getHitCount() + 1);
+        urlRepository.save(entity);
+    }
+
+    public UrlEntity getTrimmedEntity(String uri) {
+        return urlRepository.findBymodifiedUrl(uri);
     }
 }

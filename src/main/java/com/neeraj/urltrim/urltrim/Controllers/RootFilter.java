@@ -32,6 +32,7 @@ public class RootFilter implements Filter {
             String targetUri = httpRequest.getRequestURI();
             //Redirecting if the url is supposed to be redirected
             if(urlService.uriExists(targetUri)) {
+                urlService.increaseHitCount(targetUri);
                 String originalUrl = urlService.getOriginalUrl(targetUri);
                 httpResponse.sendRedirect(originalUrl);
                 return;
