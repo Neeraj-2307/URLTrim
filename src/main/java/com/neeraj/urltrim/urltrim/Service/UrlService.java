@@ -3,8 +3,8 @@ package com.neeraj.urltrim.urltrim.Service;
 import com.neeraj.urltrim.urltrim.Entity.UrlEntity;
 import com.neeraj.urltrim.urltrim.Repository.UrlRepository;
 import org.springframework.stereotype.Service;
-
 import java.util.Date;
+import java.util.Random;
 
 @Service
 public class UrlService {
@@ -28,18 +28,34 @@ public class UrlService {
                     .build();
             urlEntity.setUrl(url);
             urlRepository.save(urlEntity);
+            return "success";
         }
-        return "URL successfully saved to db";
+        return "validation failed";
     }
 
     private boolean isValidURL(String url) {
-        //TODO: Implement this
-        return true;
+        try {
+            (new java.net.URL(url)).openStream().close();
+            return !(urlExists(url));
+        } catch (Exception ignored) { }
+        return false;
+    }
+
+    private boolean urlExists(String url) {
+        return urlRepository.existsByurl(url);
     }
 
     private String trimUrl(String url) {
-        //TODO: implement this
-        return "/123";
+        String alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+        StringBuilder sb = new StringBuilder();
+        Random random = new Random();
+
+        for (int i = 0; i < 6; i++) {
+            int index = random.nextInt(alphabet.length());
+            sb.append(alphabet.charAt(index));
+        }
+
+        return "/" + sb.toString();
     }
 
     //checking if there is a need to redirection

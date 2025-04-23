@@ -12,4 +12,7 @@ public interface UrlRepository extends JpaRepository <UrlEntity, Integer> {
 
     //returning the entity in case we have this particular trimmed url
     UrlEntity findBymodifiedUrl(String modifiedUrl);
+
+    //Checking if the url is already stored
+    boolean existsByurl(String url);
 }
