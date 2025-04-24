@@ -6,9 +6,7 @@ import com.neeraj.urltrim.urltrim.Repository.UrlRepository;
 import com.neeraj.urltrim.urltrim.Utils.ErrorCode;
 import org.springframework.stereotype.Service;
 
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.net.URLEncoder;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.Random;
 
@@ -25,12 +23,16 @@ public class UrlService {
         if(!(urlExists(url))) {
             String trimmedUrl = trimUrl(url);
             Date currDate = new Date();
+            Calendar calendar = Calendar.getInstance();
+            calendar.add(Calendar.DAY_OF_MONTH, 2);
+            // Setting the expiry
+            Date dateAfterTwoDays = calendar.getTime();
             UrlEntity urlEntity = UrlEntity.builder()
                     .url(url)
                     .modifiedUrl(trimmedUrl)
                     .hitCount(0)
                     .creationTime(currDate)
-                    .urlTTL(currDate)
+                    .urlTTL(dateAfterTwoDays)
                     .build();
             urlEntity.setUrl(url);
             urlRepository.save(urlEntity);
@@ -81,5 +83,10 @@ public class UrlService {
 
     public UrlEntity getTrimmedEntity(String uri) {
         return urlRepository.findBymodifiedUrl(uri);
+    }
+
+    public void deleteExpiredLinks() {
+        System.out.println("Scheduled Deletion Job is called");
+        urlRepository.deleteByurlTTLBefore(new Date());
     }
 }
