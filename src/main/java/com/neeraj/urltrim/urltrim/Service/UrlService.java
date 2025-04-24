@@ -6,9 +6,12 @@ import com.neeraj.urltrim.urltrim.Repository.UrlRepository;
 import com.neeraj.urltrim.urltrim.Utils.ErrorCode;
 import org.springframework.stereotype.Service;
 
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Random;
+import java.util.regex.Pattern;
 
 @Service
 public class UrlService {
@@ -20,6 +23,12 @@ public class UrlService {
     }
 
     public GenericResponseModel saveUrl(String url) {
+        if(!(isUrlValid(url))) {
+            return GenericResponseModel.builder()
+                    .success(false)
+                    .errorCode(ErrorCode.INVALID_URL)
+                    .build();
+        }
         if(!(urlExists(url))) {
             //Only allowing 50 urls for now
             if(totalEntries() <= 50) {
@@ -56,11 +65,32 @@ public class UrlService {
                 .build();
     }
 
-    //TODO: create some form of atleast any simple validation
-    private boolean urlExists(String url) {
-        return urlRepository.existsByurl(url);
+    private boolean isUrlValid(String urlString) {
+        try {
+            //first check is to make a network call
+            URL url = new URL(urlString);
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setConnectTimeout(5000);
+            connection.setReadTimeout(500);
+            connection.setRequestMethod("HEAD");
+        } catch (Exception e) {
+            if(!(checkRegex(urlString))) {
+                //not able to make the connection and even regex is failing, definitely not a valid url
+                return false;
+            }
+        }
+        return true;
     }
 
+    private boolean urlExists(String urlString) {
+        return urlRepository.existsByurl(urlString);
+    }
+
+    private boolean checkRegex(String url) {
+        String regex = "^(https?|ftp)://[^\\s/$.?#].[^\\s]*$";
+        Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
+        return pattern.matcher(url).matches();
+    }
     //creating a random trimmed url
     private String trimUrl(String url) {
         String alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
