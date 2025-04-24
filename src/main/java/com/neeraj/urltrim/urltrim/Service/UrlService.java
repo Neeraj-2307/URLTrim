@@ -21,25 +21,32 @@ public class UrlService {
 
     public GenericResponseModel saveUrl(String url) {
         if(!(urlExists(url))) {
-            String trimmedUrl = trimUrl(url);
-            Date currDate = new Date();
-            Calendar calendar = Calendar.getInstance();
-            calendar.add(Calendar.DAY_OF_MONTH, 2);
-            // Setting the expiry
-            Date dateAfterTwoDays = calendar.getTime();
-            UrlEntity urlEntity = UrlEntity.builder()
-                    .url(url)
-                    .modifiedUrl(trimmedUrl)
-                    .hitCount(0)
-                    .creationTime(currDate)
-                    .urlTTL(dateAfterTwoDays)
-                    .build();
-            urlEntity.setUrl(url);
-            urlRepository.save(urlEntity);
-            return GenericResponseModel.builder()
-                    .success(true)
-                    .responseEntity(urlEntity)
-                    .build();
+            //Only allowing 50 urls for now
+            if(totalEntries() <= 50) {
+                String trimmedUrl = trimUrl(url);
+                Date currDate = new Date();
+                Calendar calendar = Calendar.getInstance();
+                calendar.add(Calendar.DAY_OF_MONTH, 2);
+                // Setting the expiry
+                Date dateAfterTwoDays = calendar.getTime();
+                UrlEntity urlEntity = UrlEntity.builder()
+                        .url(url)
+                        .modifiedUrl(trimmedUrl)
+                        .hitCount(0)
+                        .creationTime(currDate)
+                        .urlTTL(dateAfterTwoDays)
+                        .build();
+                urlEntity.setUrl(url);
+                urlRepository.save(urlEntity);
+                return GenericResponseModel.builder()
+                        .success(true)
+                        .responseEntity(urlEntity)
+                        .build();
+            } else {
+                return GenericResponseModel.builder()
+                        .errorCode(ErrorCode.MAX_URL_REACHED)
+                        .build();
+            }
         }
         return GenericResponseModel.builder()
                 .errorCode(ErrorCode.URL_ALREADY_EXISTS)
@@ -88,5 +95,9 @@ public class UrlService {
     public void deleteExpiredLinks() {
         System.out.println("Scheduled Deletion Job is called");
         urlRepository.deleteByurlTTLBefore(new Date());
+    }
+
+    public long totalEntries() {
+        return urlRepository.count();
     }
 }

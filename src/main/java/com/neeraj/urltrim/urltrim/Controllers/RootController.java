@@ -34,4 +34,10 @@ public class RootController {
     public void deleteExpiredLinks() {
         urlService.deleteExpiredLinks();
     }
+
+    //Adding to get the total urls stored
+    @GetMapping("/totalUrls")
+    public long getTotalEntries() {
+        return urlService.totalEntries();
+    }
 }

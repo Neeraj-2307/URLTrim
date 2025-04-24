@@ -24,10 +24,6 @@ public class RootFilter implements Filter {
         HttpServletRequest httpRequest = (HttpServletRequest) request;
         HttpServletResponse httpResponse = (HttpServletResponse) response;
 
-        System.out.println("Incoming Request: " +
-                httpRequest.getMethod() + " " +
-                httpRequest.getRequestURI());
-
         if(httpRequest.getMethod().equals("GET")) {
             String targetUri = httpRequest.getRequestURI();
             //Redirecting if the url is supposed to be redirected
