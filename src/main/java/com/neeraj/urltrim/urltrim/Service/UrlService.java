@@ -48,7 +48,10 @@ public class UrlService {
                         .build();
             }
         }
+        //Returning the already stored entity
         return GenericResponseModel.builder()
+                .success(false)
+                .responseEntity(urlRepository.findByurl(url))
                 .errorCode(ErrorCode.URL_ALREADY_EXISTS)
                 .build();
     }

@@ -19,6 +19,9 @@ public interface UrlRepository extends JpaRepository <UrlEntity, Integer> {
     //Checking if the url is already stored
     boolean existsByurl(String url);
 
+    //returning the entity in case we have already stored this url
+    UrlEntity findByurl(String url);
+
     @Transactional
     void deleteByurlTTLBefore(Date date);
 }
