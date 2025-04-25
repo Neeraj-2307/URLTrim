@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.Date;
+import java.util.List;
 
 @Repository
 public interface UrlRepository extends JpaRepository <UrlEntity, Integer> {
@@ -22,6 +23,8 @@ public interface UrlRepository extends JpaRepository <UrlEntity, Integer> {
     //returning the entity in case we have already stored this url
     UrlEntity findByurl(String url);
 
+    //returning the entities to delete from request details table
+    List<UrlEntity> findByurlTTLBefore(Date date);
     @Transactional
     void deleteByurlTTLBefore(Date date);
 }

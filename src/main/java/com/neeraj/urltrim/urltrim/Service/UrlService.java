@@ -1,25 +1,27 @@
 package com.neeraj.urltrim.urltrim.Service;
 
+import com.neeraj.urltrim.urltrim.Entity.RequestDetails;
 import com.neeraj.urltrim.urltrim.Entity.UrlEntity;
 import com.neeraj.urltrim.urltrim.Models.GenericResponseModel;
+import com.neeraj.urltrim.urltrim.Repository.RequestRepository;
 import com.neeraj.urltrim.urltrim.Repository.UrlRepository;
 import com.neeraj.urltrim.urltrim.Utils.ErrorCode;
 import org.springframework.stereotype.Service;
 
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.Random;
+import java.util.*;
 import java.util.regex.Pattern;
 
 @Service
 public class UrlService {
 
     private final UrlRepository urlRepository;
+    private final RequestRepository requestRepository;
 
-    public UrlService(UrlRepository urlRepository) {
+    public UrlService(UrlRepository urlRepository, RequestRepository requestRepository) {
         this.urlRepository = urlRepository;
+        this.requestRepository = requestRepository;
     }
 
     public GenericResponseModel saveUrl(String url) {
@@ -127,6 +129,12 @@ public class UrlService {
 
     public void deleteExpiredLinks() {
         System.out.println("Scheduled Deletion Job is called");
+        List<UrlEntity> entities = urlRepository.findByurlTTLBefore(new Date());
+        List <RequestDetails> requestDetails = new ArrayList<>();
+        for(UrlEntity entity : entities) {
+            requestDetails.addAll(requestRepository.findByurlEntity(entity));
+        }
+        requestRepository.deleteAll(requestDetails);
         urlRepository.deleteByurlTTLBefore(new Date());
     }
 

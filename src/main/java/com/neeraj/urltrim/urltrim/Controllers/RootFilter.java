@@ -1,5 +1,8 @@
 package com.neeraj.urltrim.urltrim.Controllers;
 
+import com.neeraj.urltrim.urltrim.Entity.RequestDetails;
+import com.neeraj.urltrim.urltrim.Entity.UrlEntity;
+import com.neeraj.urltrim.urltrim.Service.RequestService;
 import com.neeraj.urltrim.urltrim.Service.UrlService;
 import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
@@ -7,14 +10,17 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.util.Date;
 
 @Component
 public class RootFilter implements Filter {
 
     private final UrlService urlService;
+    private final RequestService requestService;
 
-    public RootFilter(UrlService urlService) {
+    public RootFilter(UrlService urlService, RequestService requestService) {
         this.urlService = urlService;
+        this.requestService = requestService;
     }
 
 
@@ -28,8 +34,19 @@ public class RootFilter implements Filter {
             String targetUri = httpRequest.getRequestURI();
             //Redirecting if the url is supposed to be redirected
             if(urlService.uriExists(targetUri)) {
+                UrlEntity urlEntity = urlService.getTrimmedEntity(targetUri);
                 urlService.increaseHitCount(targetUri);
                 String originalUrl = urlService.getOriginalUrl(targetUri);
+                RequestDetails requestDetails = RequestDetails.builder()
+                        .remoteAddr(httpRequest.getRemoteAddr())
+                        .remoteHost(httpRequest.getRemoteHost())
+                        .remotePort(httpRequest.getRemotePort())
+                        .serverName(httpRequest.getServerName())
+                        .serverPort(httpRequest.getServerPort())
+                        .creationTime(new Date())
+                        .urlEntity(urlEntity)
+                        .build();
+                requestService.saveRequest(requestDetails);
                 httpResponse.sendRedirect(originalUrl);
                 return;
             }
