@@ -2,6 +2,7 @@ package com.neeraj.urltrim.urltrim.Controllers;
 
 import com.neeraj.urltrim.urltrim.Models.GenericRequestModel;
 import com.neeraj.urltrim.urltrim.Models.GenericResponseModel;
+import com.neeraj.urltrim.urltrim.Models.GenericUrlRequestModel;
 import com.neeraj.urltrim.urltrim.Service.UrlService;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.*;
@@ -35,9 +36,18 @@ public class RootController {
         urlService.deleteExpiredLinks();
     }
 
-    //Adding to get the total urls stored
+    //To get the total urls stored
     @GetMapping("/totalUrls")
     public long getTotalEntries() {
         return urlService.totalEntries();
+    }
+
+    //To get the details of all the requests
+    @GetMapping("/fetch_url_requests")
+    public GenericUrlRequestModel getRequestEntity(@RequestParam String url) {
+        return GenericUrlRequestModel.builder()
+                .success(true)
+                .requestDetails(urlService.getRequestDetails(url))
+                .build();
     }
 }

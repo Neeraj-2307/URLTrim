@@ -141,4 +141,9 @@ public class UrlService {
     public long totalEntries() {
         return urlRepository.count();
     }
+
+    public List<RequestDetails> getRequestDetails(String url) {
+        UrlEntity urlEntity = urlRepository.findByurl(url);
+        return requestRepository.findByurlEntity(urlEntity);
+    }
 }
