@@ -1,54 +1,98 @@
 package com.neeraj.urltrim.urltrim.Service;
 
+import com.neeraj.urltrim.urltrim.Entity.RequestDetails;
 import com.neeraj.urltrim.urltrim.Entity.UrlEntity;
 import com.neeraj.urltrim.urltrim.Models.GenericResponseModel;
+import com.neeraj.urltrim.urltrim.Repository.RequestRepository;
 import com.neeraj.urltrim.urltrim.Repository.UrlRepository;
 import com.neeraj.urltrim.urltrim.Utils.ErrorCode;
 import org.springframework.stereotype.Service;
 
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.net.URLEncoder;
-import java.util.Date;
-import java.util.Random;
+import java.util.*;
+import java.util.regex.Pattern;
 
 @Service
 public class UrlService {
 
     private final UrlRepository urlRepository;
+    private final RequestRepository requestRepository;
 
-    public UrlService(UrlRepository urlRepository) {
+    public UrlService(UrlRepository urlRepository, RequestRepository requestRepository) {
         this.urlRepository = urlRepository;
+        this.requestRepository = requestRepository;
     }
 
     public GenericResponseModel saveUrl(String url) {
-        if(!(urlExists(url))) {
-            String trimmedUrl = trimUrl(url);
-            Date currDate = new Date();
-            UrlEntity urlEntity = UrlEntity.builder()
-                    .url(url)
-                    .modifiedUrl(trimmedUrl)
-                    .hitCount(0)
-                    .creationTime(currDate)
-                    .urlTTL(currDate)
-                    .build();
-            urlEntity.setUrl(url);
-            urlRepository.save(urlEntity);
+        if(!(isUrlValid(url))) {
             return GenericResponseModel.builder()
-                    .success(true)
-                    .responseEntity(urlEntity)
+                    .success(false)
+                    .errorCode(ErrorCode.INVALID_URL)
                     .build();
         }
+        if(!(urlExists(url))) {
+            //Only allowing 50 urls for now
+            if(totalEntries() <= 50) {
+                String trimmedUrl = trimUrl(url);
+                Date currDate = new Date();
+                Calendar calendar = Calendar.getInstance();
+                calendar.add(Calendar.DAY_OF_MONTH, 2);
+                // Setting the expiry
+                Date dateAfterTwoDays = calendar.getTime();
+                UrlEntity urlEntity = UrlEntity.builder()
+                        .url(url)
+                        .modifiedUrl(trimmedUrl)
+                        .hitCount(0)
+                        .creationTime(currDate)
+                        .urlTTL(dateAfterTwoDays)
+                        .build();
+                urlEntity.setUrl(url);
+                urlRepository.save(urlEntity);
+                return GenericResponseModel.builder()
+                        .success(true)
+                        .responseEntity(urlEntity)
+                        .build();
+            } else {
+                return GenericResponseModel.builder()
+                        .errorCode(ErrorCode.MAX_URL_REACHED)
+                        .build();
+            }
+        }
+        //Returning the already stored entity
         return GenericResponseModel.builder()
+                .success(false)
+                .responseEntity(urlRepository.findByurl(url))
                 .errorCode(ErrorCode.URL_ALREADY_EXISTS)
                 .build();
     }
 
-    //TODO: create some form of atleast any simple validation
-    private boolean urlExists(String url) {
-        return urlRepository.existsByurl(url);
+    private boolean isUrlValid(String urlString) {
+        try {
+            //first check is to make a network call
+            URL url = new URL(urlString);
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setConnectTimeout(5000);
+            connection.setReadTimeout(500);
+            connection.setRequestMethod("HEAD");
+        } catch (Exception e) {
+            if(!(checkRegex(urlString))) {
+                //not able to make the connection and even regex is failing, definitely not a valid url
+                return false;
+            }
+        }
+        return true;
     }
 
+    private boolean urlExists(String urlString) {
+        return urlRepository.existsByurl(urlString);
+    }
+
+    private boolean checkRegex(String url) {
+        String regex = "^(https?|ftp)://[^\\s/$.?#].[^\\s]*$";
+        Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
+        return pattern.matcher(url).matches();
+    }
     //creating a random trimmed url
     private String trimUrl(String url) {
         String alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
@@ -81,5 +125,25 @@ public class UrlService {
 
     public UrlEntity getTrimmedEntity(String uri) {
         return urlRepository.findBymodifiedUrl(uri);
+    }
+
+    public void deleteExpiredLinks() {
+        System.out.println("Scheduled Deletion Job is called");
+        List<UrlEntity> entities = urlRepository.findByurlTTLBefore(new Date());
+        List <RequestDetails> requestDetails = new ArrayList<>();
+        for(UrlEntity entity : entities) {
+            requestDetails.addAll(requestRepository.findByurlEntity(entity));
+        }
+        requestRepository.deleteAll(requestDetails);
+        urlRepository.deleteByurlTTLBefore(new Date());
+    }
+
+    public long totalEntries() {
+        return urlRepository.count();
+    }
+
+    public List<RequestDetails> getRequestDetails(String url) {
+        UrlEntity urlEntity = urlRepository.findByurl(url);
+        return requestRepository.findByurlEntity(urlEntity);
     }
 }
