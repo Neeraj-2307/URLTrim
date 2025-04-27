@@ -1,25 +1,20 @@
-# Use OpenJDK 17 base image
-FROM openjdk:17-jdk-slim AS build
+# Stage 1: Build the JAR file
+FROM maven:3.8.4-openjdk-17-slim AS build
 
 # Set working directory inside container
 WORKDIR /app
 
-# Copy Maven wrapper and source files
-COPY mvnw .
-COPY .mvn .mvn
+# Copy the pom.xml and the source code
 COPY pom.xml .
-COPY src src
+COPY src ./src
 
-# Make the Maven wrapper executable
-RUN chmod +x mvnw
+# Build the project using Maven
+RUN mvn clean package -DskipTests
 
-# Build the project inside the container
-RUN ./mvnw clean package -DskipTests
-
-# Stage 2: Use a lightweight OpenJDK 17 base image for running the application
+# Stage 2: Create the final image
 FROM openjdk:17-jdk-slim
 
-# Set working directory inside container
+# Set the working directory inside container
 WORKDIR /app
 
 # Copy the JAR file from the build stage
