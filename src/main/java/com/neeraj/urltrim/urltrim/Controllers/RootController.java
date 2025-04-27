@@ -10,6 +10,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
+@CrossOrigin
 public class RootController {
 
     private final UrlService urlService;
